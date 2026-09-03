@@ -219,3 +219,6 @@ __marimo__/
 
 # vscode
 .vscode/
+
+# results
+results/
