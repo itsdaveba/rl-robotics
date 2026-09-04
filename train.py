@@ -28,8 +28,7 @@ if __name__ == "__main__":
     with open(os.path.join(output_folder, "experiments.txt"), "a") as file:
         file.write(f"{experiment_id}\n")
 
-    target_pos = np.array([0.0, 0.0, 0.5])
-    env_kwargs = dict(gui=False, num_drones=1, initial_spawn=0.5, target_pos=target_pos, act=ActionType.RPM)
+    env_kwargs = dict(initial_spawn=0.5, target_pos=np.array([0.0, 0.0, 0.5]), act=ActionType.RPM)
     train_env = make_vec_env(HoverAviary, n_envs=n_envs, env_kwargs=env_kwargs)
     eval_env = make_vec_env(HoverAviary, n_envs=n_eval_episodes, env_kwargs=env_kwargs)
 
