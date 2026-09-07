@@ -102,10 +102,11 @@ def move_model(scf, model: PPO):
         while True:
             try:
                 action, _ = model.predict(np.expand_dims(observation, axis=0), deterministic=True)
-                action[0:3] *= 30  # +- 30 degrees
-                roll, pitch, yaw = action
-                thrust = action[3] * 18022 + 34406,  # from 25% to 80%
-                mc._cf.commander.send_setpoint(roll, pitch, yaw, thrust)
+                action = np.squeeze(action)
+                action[0:3] *= 10  # +- 10 degrees
+                roll, pitch = action[0:2]
+                thrust = int(action[3] * 18022 + 34406)  # from 25% to 80%
+                mc._cf.commander.send_setpoint(roll, pitch, 0.0, thrust)
                 time.sleep(CTRL_TIMESTEP)
             except KeyboardInterrupt:
                 break
