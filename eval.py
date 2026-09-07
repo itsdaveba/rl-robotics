@@ -33,7 +33,7 @@ if __name__ == "__main__":
     model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
 
     n_eval_episodes = 100
-    env_kwargs = dict(initial_spawn=0.5, target_pos=np.array([0.0, 0.0, 0.5]), act=ActionType.RPM)
+    env_kwargs = dict(initial_spawn=0.5, target_pos=np.array([0.0, 0.0, 0.5]), act=ActionType.RPYT)
 
     for mass in np.arange(0.017, 0.038, 0.001):
         env_kwargs["mass"] = mass

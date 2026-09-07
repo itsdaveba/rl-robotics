@@ -47,8 +47,8 @@ if __name__ == "__main__":
 
     if gui or plot:
         model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
-        target_pos = np.array([0.0, 0.0, 0.5])
-        env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, target_pos=target_pos, act=ActionType.RPM)
+        target_pos = np.array([0.0, 0.0, 0.3])
+        env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.3, target_pos=target_pos, act=ActionType.RPYT)
         env = HoverAviary(**env_kwargs)
         obs, _ = env.reset()
         start = time.time()
@@ -56,7 +56,8 @@ if __name__ == "__main__":
 
         for i in range(env.EPISODE_LEN_SEC * env.CTRL_FREQ):
             action, _ = model.predict(np.expand_dims(obs, axis=1), deterministic=True)
-            obs, reward, terminated, truncated, _ = env.step(action)
+            action = np.squeeze(action)
+            obs, reward, _, _, _ = env.step(action)
             for j in range(env.NUM_DRONES):
                 logger.log(drone=j, timestamp=i / env.CTRL_FREQ, action=action[j], obs=obs[j], reward=reward[j])
             env.render()

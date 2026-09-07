@@ -222,3 +222,6 @@ __marimo__/
 
 # results
 results/
+
+# cache
+cache/

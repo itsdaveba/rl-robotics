@@ -24,6 +24,7 @@ DEFAULT_HEIGHT = 0.1
 CTRL_TIMESTEP = 1.0 / 30
 
 deck_attached_event = Event()
+flightmode_event = Event()
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -64,9 +65,18 @@ def param_deck_flow(_, value_str):
     value = int(value_str)
     if value:
         deck_attached_event.set()
-        print('Deck is attached!')
+        print('Deck is attached')
     else:
-        print('Deck is NOT attached!')
+        print('Deck is NOT attached')
+
+
+def param_flightmode(_, value_str):
+    value = int(value_str)
+    if value == 1:
+        flightmode_event.set()
+        print('Yaw ANGLE flightmode')
+    else:
+        print('Yaw RATE flightmode')
 
 
 def stop(mc):
@@ -91,12 +101,11 @@ def move_model(scf, model: PPO):
 
         while True:
             try:
-                roll = 0.0
-                pitch = 0.0
-                yawrate = 0.0
-                thrust = 37000
                 action, _ = model.predict(np.expand_dims(observation, axis=0), deterministic=True)
-                mc._cf.commander.send_setpoint(roll, pitch, yawrate, thrust)
+                action[0:3] *= 30  # +- 30 degrees
+                roll, pitch, yaw = action
+                thrust = action[3] * 18022 + 34406,  # from 25% to 80%
+                mc._cf.commander.send_setpoint(roll, pitch, yaw, thrust)
                 time.sleep(CTRL_TIMESTEP)
             except KeyboardInterrupt:
                 break
@@ -144,6 +153,8 @@ if __name__ == "__main__":
 
     with SyncCrazyflie(URI, cf=Crazyflie(rw_cache="./cache")) as scf:
         scf.cf.param.add_update_callback(group="deck", name="bcFlow2", cb=param_deck_flow)
+        scf.cf.param.add_update_callback(group="flightmode", name="stabModeYaw", cb=param_flightmode)
+        scf.cf.param.set_value("flightmode.stabModeYaw", 1)
 
         logconf = get_logconf()
         scf.cf.log.add_config(logconf)
@@ -151,6 +162,10 @@ if __name__ == "__main__":
 
         if not deck_attached_event.wait(timeout=5.0):
             print("No flow deck detected")
+            sys.exit(1)
+
+        if not flightmode_event.wait(timeout=5.0):
+            print("Incorrect flightmode")
             sys.exit(1)
 
         scf.cf.supervisor.send_arming_request(True)
