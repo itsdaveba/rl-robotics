@@ -33,32 +33,47 @@ observation = np.zeros(12)
 
 def log_pose_callback(timestamp, data, logconf):
     pos = np.array([data["stateEstimateZ.x"], data["stateEstimateZ.y"], data["stateEstimateZ.z"]]) / 1000
-    print(f"[{timestamp}][{logconf.name}]: ", end="")
+    quat = data["stateEstimateZ.quat"]
+    rot = Rotation.from_quat(decompress_quaternion(quat))
+    rpy = rot.as_euler(seq="xyz")
+    vel = np.array([data["stateEstimateZ.vx"], data["stateEstimateZ.vy"], data["stateEstimateZ.vz"]]) / 1000
+    rpy_rate = np.array([data["stateEstimateZ.rateRoll"], data["stateEstimateZ.ratePitch"], data["stateEstimateZ.rateYaw"]]) / 1000
+    rpy_rate[1] = -rpy_rate[1]
+
+    global observation
+    observation = np.hstack([pos, rpy, vel, rpy_rate])
+
+
+def print_obs():
+    pos = observation[0:3]
+    rpy = observation[3:6]
+    vel = observation[6:9]
+    rpy_rate = observation[9:12]
+
+    print(f"[{logconf.name}]: ", end="")
     print(f"x={pos[0]:+06.3f}", end=" ")
     print(f"y={pos[1]:+06.3f}", end=" ")
     print(f"z={pos[2]:+06.3f}", end=" ")
 
-    quat = data["stateEstimateZ.quat"]
-    rot = Rotation.from_quat(decompress_quaternion(quat))
-    rpy = rot.as_euler(seq="xyz")
     print(f"roll={rpy[0] * 180 / np.pi:+08.3f}", end=" ")
     print(f"pitch={rpy[1] * 180 / np.pi:+08.3f}", end=" ")
     print(f"yaw={rpy[2] * 180 / np.pi:+08.3f}", end=" ")
 
-    vel = np.array([data["stateEstimateZ.vx"], data["stateEstimateZ.vy"], data["stateEstimateZ.vz"]]) / 1000
     print(f"vx={vel[0]:+06.3f}", end=" ")
     print(f"vy={vel[1]:+06.3f}", end=" ")
     print(f"vz={vel[2]:+06.3f}", end=" ")
 
-    rpy_rate = np.array([data["stateEstimateZ.rateRoll"], data["stateEstimateZ.ratePitch"], data["stateEstimateZ.rateYaw"]]) / 1000
-    rpy_rate[1] = -rpy_rate[1]
-    print(f"wx={rpy_rate[0] * 180 / np.pi:+08.3f}", end=" ")
-    print(f"wy={rpy_rate[1] * 180 / np.pi:+08.3f}", end=" ")
-    print(f"wz={rpy_rate[2] * 180 / np.pi:+08.3f}", end=" ")
-    print()
+    print(f"roll_rate={rpy_rate[0] * 180 / np.pi:+08.3f}", end=" ")
+    print(f"pitch_rate={rpy_rate[1] * 180 / np.pi:+08.3f}", end=" ")
+    print(f"yaw_rate={rpy_rate[2] * 180 / np.pi:+08.3f}")
 
-    global observation
-    observation = np.hstack([pos, rpy, vel, rpy_rate])
+
+def print_action(action):
+    print(f"[action]: ", end="")
+    print(f"ROLL={action[0]:+06.3f}", end=" ")
+    print(f"PITCH={action[1]:+06.3f}", end=" ")
+    print(f"YAW={action[2]:+06.3f}", end=" ")
+    print(f"THRUST={action[2]:+06.3f}")
 
 
 def param_deck_flow(_, value_str):
@@ -93,7 +108,7 @@ def stop(mc):
     time.sleep(1.0)
 
 
-def move_model(scf, model: PPO):
+def move_model(scf, model: PPO, verbose):
     with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
 
         mc._cf.commander.send_setpoint(0.0, 0.0, 0.0, 0)
@@ -101,9 +116,13 @@ def move_model(scf, model: PPO):
 
         while True:
             try:
+                if verbose:
+                    print_obs()
                 observation[0:3] -= [0.0, 0.0, 0.3]
                 action, _ = model.predict(np.expand_dims(observation, axis=0), deterministic=True)
                 action = np.squeeze(action)
+                if verbose:
+                    print_action(action)
                 action[0:3] *= 10  # +- 10 degrees
                 roll, pitch = action[0:2]
                 thrust = int(action[3] * 18022 + 34406)  # from 25% to 80%
@@ -137,10 +156,12 @@ if __name__ == "__main__":
 
     parser.add_argument("--output-folder", default="results")
     parser.add_argument("--experiment-id", default=None)
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
     output_folder = args.output_folder
     experiment_id = args.experiment_id
+    verbose = args.verbose
 
     if experiment_id is None:
         with open(os.path.join(output_folder, "experiments.txt"), "r") as file:
@@ -174,5 +195,5 @@ if __name__ == "__main__":
         time.sleep(1.0)
 
         logconf.start()
-        move_model(scf, model)
+        move_model(scf, model, verbose)
         logconf.stop()
