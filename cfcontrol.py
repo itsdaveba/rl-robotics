@@ -101,6 +101,7 @@ def move_model(scf, model: PPO):
 
         while True:
             try:
+                observation[0:3] -= [0.0, 0.0, 0.3]
                 action, _ = model.predict(np.expand_dims(observation, axis=0), deterministic=True)
                 action = np.squeeze(action)
                 action[0:3] *= 10  # +- 10 degrees

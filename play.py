@@ -47,8 +47,7 @@ if __name__ == "__main__":
 
     if gui or plot:
         model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
-        target_pos = np.array([0.0, 0.0, 0.3])
-        env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.3, target_pos=target_pos, act=ActionType.RPYT)
+        env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, act=ActionType.RPYT)
         env = HoverAviary(**env_kwargs)
         obs, _ = env.reset()
         start = time.time()

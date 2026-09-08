@@ -1,11 +1,10 @@
 import os
 import secrets
 import argparse
-import numpy as np
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 
 from gym_pybullet_drones.envs.HoverAviary import HoverAviary
 from gym_pybullet_drones.utils.enums import ActionType
@@ -15,9 +14,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--output-folder", default="results")
+    parser.add_argument("--reward-threshold", default=220.0, type=float)
     args = parser.parse_args()
 
     output_folder = args.output_folder
+    reward_threshold = args.reward_threshold
     n_eval_episodes = 5
     n_envs = 4
 
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     with open(os.path.join(output_folder, "experiments.txt"), "a") as file:
         file.write(f"{experiment_id}\n")
 
-    env_kwargs = dict(initial_spawn=0.3, target_pos=np.array([0.0, 0.0, 0.3]), act=ActionType.RPYT)
+    env_kwargs = dict(initial_spawn=0.5, act=ActionType.RPYT)
     train_env = make_vec_env(HoverAviary, n_envs=n_envs, env_kwargs=env_kwargs)
     eval_env = make_vec_env(HoverAviary, n_envs=n_eval_episodes, env_kwargs=env_kwargs)
 
@@ -43,8 +44,10 @@ if __name__ == "__main__":
         verbose=1,
         device="cpu")
 
+    callback_on_best = StopTrainingOnRewardThreshold(reward_threshold, verbose=True)
     eval_callback = EvalCallback(
         eval_env,
+        callback_on_new_best=callback_on_best,
         n_eval_episodes=n_eval_episodes,
         eval_freq=10000 // n_envs,
         log_path=filename,
