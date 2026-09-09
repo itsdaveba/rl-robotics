@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--learning-curve", action="store_true")
     parser.add_argument("--gui", action="store_true")
     parser.add_argument("--plot", action="store_true")
+    parser.add_argument("--save", action="store_true")
     args = parser.parse_args()
 
     output_folder = args.output_folder
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     learning_curve = args.learning_curve
     gui = args.gui
     plot = args.plot
+    save = args.save
 
     if experiment_id is None:
         with open(os.path.join(output_folder, "experiments.txt"), "r") as file:
@@ -51,7 +53,7 @@ if __name__ == "__main__":
         env = HoverAviary(**env_kwargs)
         obs, _ = env.reset()
         start = time.time()
-        logger = Logger(logging_freq_hz=int(env.CTRL_FREQ), num_drones=env.NUM_DRONES)
+        logger = Logger(logging_freq_hz=int(env.CTRL_FREQ), output_folder=filename, num_drones=env.NUM_DRONES)
 
         for i in range(env.EPISODE_LEN_SEC * env.CTRL_FREQ):
             action, _ = model.predict(np.expand_dims(obs, axis=1), deterministic=True)
@@ -63,6 +65,9 @@ if __name__ == "__main__":
             sync(i, start, env.CTRL_TIMESTEP)
 
         env.close()
+
+        if save:
+            logger.save_as_csv("simulation")
 
         if plot:
             logger.plot()
