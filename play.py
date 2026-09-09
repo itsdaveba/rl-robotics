@@ -17,6 +17,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--output-folder", default="results")
     parser.add_argument("--experiment-id", default=None)
+    parser.add_argument("--visible-context", action="store_true")
     parser.add_argument("--gui", action="store_true")
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--plot", action="store_true")
@@ -24,6 +25,7 @@ if __name__ == "__main__":
 
     output_folder = args.output_folder
     experiment_id = args.experiment_id
+    visible_context = args.visible_context
     gui = args.gui
     save = args.save
     plot = args.plot
@@ -36,7 +38,7 @@ if __name__ == "__main__":
     print(f"[INFO] Loading experiment-id: {experiment_id}")
 
     model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
-    env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, act=ActionType.RPYT)
+    env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, act=ActionType.RPYT, visible_context=visible_context)
     env = HoverAviary(**env_kwargs)
     obs, _ = env.reset()
     start = time.time()
@@ -47,7 +49,7 @@ if __name__ == "__main__":
         action = np.squeeze(action)
         obs, reward, _, _, _ = env.step(action)
         for j in range(env.NUM_DRONES):
-            logger.log(drone=j, timestamp=i / env.CTRL_FREQ, action=action[j], obs=obs[j], reward=reward[j])
+            logger.log(drone=j, timestamp=i / env.CTRL_FREQ, action=action[j], obs=obs[j][:12], reward=reward[j])
         env.render()
         sync(i, start, env.CTRL_TIMESTEP)
 

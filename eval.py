@@ -19,21 +19,22 @@ if __name__ == "__main__":
 
     parser.add_argument("--output-folder", default="results")
     parser.add_argument("--experiment-id", default=None)
+    parser.add_argument("--visible-context", action="store_true")
     parser.add_argument("--n-eval-episodes", default=100, type=int)
-    parser.add_argument("--start", type=float)
-    parser.add_argument("--stop", type=float)
-    parser.add_argument("--step", type=float)
-    parser.add_argument("--kwarg")
+    parser.add_argument("--start", type=float, required=True)
+    parser.add_argument("--stop", type=float, required=True)
+    parser.add_argument("--step", type=float, required=True)
+    parser.add_argument("--kwarg", required=True)
     args = parser.parse_args()
 
     output_folder = args.output_folder
     experiment_id = args.experiment_id
+    visible_context = args.visible_context
     n_eval_episodes = args.n_eval_episodes
     start = args.start
     stop = args.stop
     step = args.step
     kwarg = args.kwarg
-    show = args.show
 
     if experiment_id is None:
         with open(os.path.join(output_folder, "experiments.txt"), "r") as file:
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     print(f"[INFO] Loading experiment-id: {experiment_id}")
 
     model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
-    env_kwargs = dict(initial_spawn=0.5, act=ActionType.RPYT)
+    env_kwargs = dict(initial_spawn=0.5, act=ActionType.RPYT, visible_context=visible_context)
 
     for value in np.arange(start, stop, step):
         env_kwargs[kwarg] = value
