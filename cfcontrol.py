@@ -24,7 +24,7 @@ from cflib.positioning.motion_commander import MotionCommander
 
 URI = uri_helper.uri_from_env(default="radio://0/80/2M/E7E7E7E7E7")
 
-DEFAULT_HEIGHT = 0.1
+DEFAULT_HEIGHT = 0.5
 
 deck_attached_event = Event()
 flightmode_event = Event()
@@ -112,10 +112,9 @@ def stop(mc):
 
 
 def move_model(scf, model: PPO, env: HoverAviary, logger: Logger, drone, duration, verbose):
-    # 1.0 x 1.0 x 0.5 above the drone (with z >= 0.1 to avoid ground effect)
-    target_pos = np.random.uniform(-1.0, 1.0, size=3)
-    target_pos *= [0.5, 0.5, 0.2]
-    target_pos[2] += 0.3
+    # 1.0 x 1.0 x 1.0 above the drone (with z >= 0.1 to avoid ground effect)
+    target_pos = np.random.uniform(-0.5, 0.5, size=3)
+    target_pos[2] += 0.6
     print("[target_position]:", end=" ")
     print(f"x={target_pos[0]:+06.3f}", end=" ")
     print(f"y={target_pos[1]:+06.3f}", end=" ")

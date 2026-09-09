@@ -2,7 +2,6 @@ import os
 import time
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 
 from stable_baselines3 import PPO
 
