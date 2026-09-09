@@ -138,7 +138,7 @@ def move_model(scf, model: PPO, env: HoverAviary, logger: Logger, drone, duratio
                 total_reward += reward
                 if verbose:
                     print_action(action)
-                    print(f"[reward]: {reward:+06.3f}")
+                    print(f"[reward]: {reward:+.3f}")
                 action[0:3] *= 10  # +- 10 degrees
                 roll, pitch = action[0:2]
                 thrust = int(action[3] * 18022 + 34406)  # from 25% to 80%
@@ -147,7 +147,7 @@ def move_model(scf, model: PPO, env: HoverAviary, logger: Logger, drone, duratio
             except KeyboardInterrupt:
                 return False
 
-        print(f"[total_reward]: {total_reward:+06.3f}")
+        print(f"[total_reward]: {total_reward:+.3f}")
 
         stop(mc)
 
@@ -230,8 +230,8 @@ if __name__ == "__main__":
             if not move_model(scf, model, env, logger, drone, duration, verbose):
                 break
         if save:
-            logger.save_as_csv()
+            logger.save()
         if plot:
-            logger.plot()
+            logger.plot(show=True)
 
         logconf.stop()

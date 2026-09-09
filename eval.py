@@ -24,7 +24,6 @@ if __name__ == "__main__":
     parser.add_argument("--stop", type=float)
     parser.add_argument("--step", type=float)
     parser.add_argument("--kwarg")
-    parser.add_argument("--show", action="store_true")
     args = parser.parse_args()
 
     output_folder = args.output_folder
@@ -43,12 +42,6 @@ if __name__ == "__main__":
     filename = os.path.join(output_folder, experiment_id)
     print(f"[INFO] Loading experiment-id: {experiment_id}")
 
-    if show:
-        df = pd.read_csv(os.path.join(filename, "evaluations.csv"))
-        sns.lineplot(df, x="mass", y="episode_rewards")
-        plt.show()
-        sys.exit()
-
     model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
     env_kwargs = dict(initial_spawn=0.5, act=ActionType.RPYT)
 
@@ -58,7 +51,3 @@ if __name__ == "__main__":
         episode_rewards, _ = evaluate_policy(model, env, n_eval_episodes, True, return_episode_rewards=True)
         df = pd.DataFrame(dict(episode_rewards=episode_rewards, mass=env.envs[0].env.M))
         df.to_csv(os.path.join(filename, "evaluations.csv"), header=not os.path.exists(os.path.join(filename, "evaluations.csv")), index=False, mode="a")
-
-    df = pd.read_csv(os.path.join(filename, "evaluations.csv"))
-    sns.lineplot(df, x="mass", y="episode_rewards")
-    plt.show()
