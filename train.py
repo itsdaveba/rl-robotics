@@ -15,16 +15,16 @@ if __name__ == "__main__":
 
     parser.add_argument("--output-folder", default="results")
     parser.add_argument("--reward-threshold", default=220.0, type=float)
-    parser.add_argument("--visible-context", action="store_true")
     parser.add_argument("--n-eval-episodes", default=100, type=int)
-    parser.add_argument("--context-low", default=None, type=float)
-    parser.add_argument("--context-high", default=None, type=float)
+    parser.add_argument("--context-kwargs", action="extend", nargs="+")
+    parser.add_argument("--context-low", action="extend", nargs="+", type=float)
+    parser.add_argument("--context-high", action="extend", nargs="+", type=float)
     args = parser.parse_args()
 
     output_folder = args.output_folder
     reward_threshold = args.reward_threshold
-    visible_context = args.visible_context
     n_eval_episodes = args.n_eval_episodes
+    context_kwargs = args.context_kwargs
     context_low = args.context_low
     context_high = args.context_high
     n_envs = 4
@@ -32,11 +32,12 @@ if __name__ == "__main__":
     experiment_id = secrets.token_hex(4)
     filename = os.path.join(output_folder, experiment_id)
     os.makedirs(filename)
+    print(f"[INFO] Creating experiment-id: {experiment_id}")
 
     with open(os.path.join(output_folder, "experiments.txt"), "a") as file:
         file.write(f"{experiment_id}\n")
 
-    env_kwargs = dict(initial_spawn=0.5, act=ActionType.RPYT, visible_context=visible_context, context_low=context_low, context_high=context_high)
+    env_kwargs = dict(initial_spawn=0.5, initial_angle=10, act=ActionType.RPYT, context_kwargs=context_kwargs, context_low=context_low, context_high=context_high)
     train_env = make_vec_env(HoverAviary, n_envs=n_envs, env_kwargs=env_kwargs)
     eval_env = make_vec_env(HoverAviary, n_envs=n_eval_episodes, env_kwargs=env_kwargs)
 
