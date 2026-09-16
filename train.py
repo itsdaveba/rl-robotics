@@ -14,19 +14,25 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--output-folder", default="results")
-    parser.add_argument("--reward-threshold", default=220.0, type=float)
+    parser.add_argument("--reward-threshold", default=float("inf"), type=float)
     parser.add_argument("--n-eval-episodes", default=100, type=int)
+    parser.add_argument("--context-visible", action="extend", nargs="+", type=int)
     parser.add_argument("--context-kwargs", action="extend", nargs="+")
     parser.add_argument("--context-low", action="extend", nargs="+", type=float)
     parser.add_argument("--context-high", action="extend", nargs="+", type=float)
+    parser.add_argument("--context-low-gen", action="extend", nargs="+", type=float)
+    parser.add_argument("--context-high-gen", action="extend", nargs="+", type=float)
     args = parser.parse_args()
 
     output_folder = args.output_folder
     reward_threshold = args.reward_threshold
     n_eval_episodes = args.n_eval_episodes
+    context_visible = args.context_visible
     context_kwargs = args.context_kwargs
     context_low = args.context_low
     context_high = args.context_high
+    context_low_gen = args.context_low_gen
+    context_high_gen = args.context_high_gen
     n_envs = 4
 
     experiment_id = secrets.token_hex(4)
@@ -37,7 +43,10 @@ if __name__ == "__main__":
     with open(os.path.join(output_folder, "experiments.txt"), "a") as file:
         file.write(f"{experiment_id}\n")
 
-    env_kwargs = dict(initial_spawn=0.5, initial_angle=10, act=ActionType.RPYT, context_kwargs=context_kwargs, context_low=context_low, context_high=context_high)
+    env_kwargs = dict(initial_spawn=0.5, initial_angle=10.0, act=ActionType.RPYT,
+                      context_visible=context_visible, context_kwargs=context_kwargs,
+                      context_low=context_low, context_high=context_high,
+                      context_low_gen=context_low_gen, context_high_gen=context_high_gen)
     train_env = make_vec_env(HoverAviary, n_envs=n_envs, env_kwargs=env_kwargs)
     eval_env = make_vec_env(HoverAviary, n_envs=n_eval_episodes, env_kwargs=env_kwargs)
 

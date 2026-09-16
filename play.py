@@ -16,7 +16,12 @@ if __name__ == "__main__":
 
     parser.add_argument("--output-folder", default="results")
     parser.add_argument("--experiment-id", default=None)
-    parser.add_argument("--visible-context", action="store_true")
+    parser.add_argument("--context-visible", action="extend", nargs="+", type=int)
+    parser.add_argument("--context-kwargs", action="extend", nargs="+")
+    parser.add_argument("--context-low", action="extend", nargs="+", type=float)
+    parser.add_argument("--context-high", action="extend", nargs="+", type=float)
+    parser.add_argument("--context-low-gen", action="extend", nargs="+", type=float)
+    parser.add_argument("--context-high-gen", action="extend", nargs="+", type=float)
     parser.add_argument("--gui", action="store_true")
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--plot", action="store_true")
@@ -24,7 +29,12 @@ if __name__ == "__main__":
 
     output_folder = args.output_folder
     experiment_id = args.experiment_id
-    visible_context = args.visible_context
+    context_visible = args.context_visible
+    context_kwargs = args.context_kwargs
+    context_low = args.context_low
+    context_high = args.context_high
+    context_low_gen = args.context_low_gen
+    context_high_gen = args.context_high_gen
     gui = args.gui
     save = args.save
     plot = args.plot
@@ -37,7 +47,10 @@ if __name__ == "__main__":
     print(f"[INFO] Loading experiment-id: {experiment_id}")
 
     model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
-    env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, act=ActionType.RPYT, visible_context=visible_context)
+    env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, initial_angle=10.0, act=ActionType.RPYT,
+                      context_visible=context_visible, context_kwargs=context_kwargs,
+                      context_low=context_low, context_high=context_high,
+                      context_low_gen=context_low_gen, context_high_gen=context_high_gen)
     env = HoverAviary(**env_kwargs)
     obs, _ = env.reset()
     start = time.time()

@@ -3,7 +3,6 @@ import argparse
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 from gym_pybullet_drones.envs import HoverAviary
@@ -26,7 +25,7 @@ if __name__ == "__main__":
             experiment_id = file.readlines()[-1].strip()
 
     filename = os.path.join(output_folder, experiment_id)
-    print(f"[INFO] Loading experiment-id: {experiment_id}")
+    print(f"[INFO]: Loading experiment-id: {experiment_id}")
 
     learning_curve_path = os.path.join(filename, "evaluations.npz")
     if os.path.exists(learning_curve_path):
@@ -43,10 +42,29 @@ if __name__ == "__main__":
     eval_path = os.path.join(filename, "evaluations.csv")
     if os.path.exists(eval_path):
         df = pd.read_csv(os.path.join(filename, "evaluations.csv"))
-        plt.figure(2)
-        sns.lineplot(df, x="mass", y="episode_rewards")
-        plt.title("Context Evaluation")
-        plt.grid(True, alpha=0.6)
+        grouped = df.groupby(["mass", "kf"])
+        mean = grouped.mean().reset_index()
+
+        fig = plt.figure(2)
+        ax = fig.add_subplot(111, projection="3d")
+
+        MASS = mean["mass"].unique()
+        KF = mean["kf"].unique()
+
+        MASS, KF = np.meshgrid(MASS, KF)
+
+        MEAN = mean.pivot(
+            columns="mass",
+            index="kf",
+            values="episode_rewards"
+        ).values
+
+        ax.plot_surface(MASS, KF, MEAN, alpha=0.7)
+
+        ax.set_xlabel("mass")
+        ax.set_ylabel("kf")
+        ax.set_zlabel("episode reward")
+        ax.set_title("Context Evaluation")
 
     flight_data_path = os.path.join(filename, "flight-data-simulation.npz")
     if os.path.exists(flight_data_path):
