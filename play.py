@@ -46,7 +46,24 @@ if __name__ == "__main__":
     filename = os.path.join(output_folder, experiment_id)
     print(f"[INFO] Loading experiment-id: {experiment_id}")
 
-    model = PPO.load(os.path.join(filename, "best_model"), device="cpu")
+    learning_curve_dirs = []
+    for name in os.listdir(os.path.join(filename, "evaluations")):
+        if os.path.isdir(os.path.join(filename, "evaluations", name)):
+            learning_curve_dirs.append(int(name))
+    learning_curve_dirs.sort()
+
+    best_result = -np.inf
+    best_dir = None
+    for learning_curve_dir in learning_curve_dirs:
+        learning_curve_path = os.path.join(filename, "evaluations", str(learning_curve_dir), "evaluations.npz")
+        with np.load(learning_curve_path) as data:
+            timesteps = data["timesteps"]
+            results = np.mean(data["results"], axis=1)
+        if results.max() > best_result:
+            best_result = results.max()
+            best_dir = learning_curve_dir
+
+    model = PPO.load(os.path.join(filename, "evaluations", str(best_dir), "best_model"), device="cpu")
     env_kwargs = dict(gui=gui, num_drones=5, initial_spawn=0.5, initial_angle=10.0, act=ActionType.RPYT,
                       context_visible=context_visible, context_kwargs=context_kwargs,
                       context_low=context_low, context_high=context_high,
@@ -63,7 +80,8 @@ if __name__ == "__main__":
         for j in range(env.NUM_DRONES):
             logger.log(drone=j, timestamp=i / env.CTRL_FREQ, action=action[j], obs=obs[j][:12], reward=reward[j])
         env.render()
-        sync(i, start, env.CTRL_TIMESTEP)
+        if gui:
+            sync(i, start, env.CTRL_TIMESTEP)
 
     env.close()
 

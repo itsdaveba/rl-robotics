@@ -27,17 +27,29 @@ if __name__ == "__main__":
     filename = os.path.join(output_folder, experiment_id)
     print(f"[INFO]: Loading experiment-id: {experiment_id}")
 
-    learning_curve_path = os.path.join(filename, "evaluations.npz")
-    if os.path.exists(learning_curve_path):
-        with np.load(learning_curve_path) as data:
-            timesteps = data["timesteps"]
-            results = np.mean(data["results"], axis=1)
-            plt.figure(1)
-            plt.plot(timesteps, results, marker='o', linestyle='-', markersize=4)
-            plt.title("Learning Curve")
-            plt.xlabel("Training Steps")
-            plt.ylabel("Episode Reward")
-            plt.grid(True, alpha=0.6)
+    learning_curve_dirs = []
+    for name in os.listdir(os.path.join(filename, "evaluations")):
+        if os.path.isdir(os.path.join(filename, "evaluations", name)):
+            learning_curve_dirs.append(int(name))
+    learning_curve_dirs.sort()
+
+    if learning_curve_dirs:
+        plt.figure(1)
+        previous = None
+        for learning_curve_dir in learning_curve_dirs:
+            learning_curve_path = os.path.join(filename, "evaluations", str(learning_curve_dir), "evaluations.npz")
+            with np.load(learning_curve_path) as data:
+                timesteps = data["timesteps"]
+                results = np.mean(data["results"], axis=1)
+            if previous is not None:
+                timesteps = np.append([previous[0]], timesteps)
+                results = np.append([previous[1]], results)
+            plt.plot(timesteps, results, marker='o', linestyle='-', markersize=4, color="#1f77b4")
+            previous = (timesteps[-1], results[-1])
+        plt.title("Learning Curve")
+        plt.xlabel("Training Steps")
+        plt.ylabel("Episode Reward")
+        plt.grid(True, alpha=0.6)
 
     eval_path = os.path.join(filename, "evaluations.csv")
     if os.path.exists(eval_path):
