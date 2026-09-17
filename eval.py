@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--context-high", action="extend", nargs="+", type=float)
     parser.add_argument("--context-low-gen", action="extend", nargs="+", type=float)
     parser.add_argument("--context-high-gen", action="extend", nargs="+", type=float)
+    parser.add_argument("--final-model", action="store_true")
     parser.add_argument("--start", type=float, required=True)
     parser.add_argument("--stop", type=float, required=True)
     parser.add_argument("--step", type=float, required=True)
@@ -38,6 +39,7 @@ if __name__ == "__main__":
     context_high = args.context_high
     context_low_gen = args.context_low_gen
     context_high_gen = args.context_high_gen
+    final_model = args.final_model
     start = args.start
     stop = args.stop
     step = args.step
@@ -67,7 +69,10 @@ if __name__ == "__main__":
             best_result = results.max()
             best_dir = learning_curve_dir
 
-    model = PPO.load(os.path.join(filename, "evaluations", str(best_dir), "best_model"), device="cpu")
+    if final_model:
+        model = PPO.load(os.path.join(filename, "final_model"), device="cpu")
+    else:
+        model = PPO.load(os.path.join(filename, "evaluations", str(best_dir), "best_model"), device="cpu")
     env_kwargs = dict(initial_spawn=0.5, initial_angle=10.0, act=ActionType.RPYT,
                       context_visible=context_visible, context_kwargs=context_kwargs if context_kwargs else [],
                       context_low=context_low, context_high=context_high,
