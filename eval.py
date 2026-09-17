@@ -78,8 +78,9 @@ if __name__ == "__main__":
         env_kwargs["context_kwargs"].append(kwarg)
         env_kwargs["context_low_gen"].append(value)
         env_kwargs["context_high_gen"].append(value)
-        env = make_vec_env(HoverAviary, n_envs=5, env_kwargs=env_kwargs)
-        print(f"[INFO]: mass={env.envs[0].env.M:.3f} kf={env.envs[0].env.KF:.3e}")
-        episode_rewards, _ = evaluate_policy(model, env, n_eval_episodes, True, return_episode_rewards=True)
-        df = pd.DataFrame(dict(episode_rewards=episode_rewards, mass=env.envs[0].env.M, kf=env.envs[0].env.KF))
+        vec_env = make_vec_env(HoverAviary, n_envs=5, env_kwargs=env_kwargs)
+        env = vec_env.envs[0].env
+        print(f"[INFO]: mass={env.M[0]:.3f} kf={env.KF[0]:.3e}")
+        episode_rewards, _ = evaluate_policy(model, vec_env, n_eval_episodes, True, return_episode_rewards=True)
+        df = pd.DataFrame(dict(episode_rewards=episode_rewards, mass=env.M[0], kf=env.KF[0]))
         df.to_csv(os.path.join(filename, "evaluations.csv"), header=not os.path.exists(os.path.join(filename, "evaluations.csv")), index=False, mode="a")
